@@ -13,6 +13,8 @@ const envSchema = z.object({
     .regex(/^[0-9]+$/, 'PORT must be a numeric string'),
   MONGODB_URI: z.string().min(1, 'MONGODB_URI is required'),
   CORS_ORIGIN: z.string().min(1, 'CORS_ORIGIN is required'),
+  JWT_SECRET: z.string().min(1, 'JWT_SECRET is required'),
+  JWT_EXPIRES_IN: z.string().default('1h'),
 });
 
 const parsed = envSchema.safeParse(process.env);
@@ -27,4 +29,6 @@ export const env = {
   PORT: Number(parsed.data.PORT),
   MONGODB_URI: parsed.data.MONGODB_URI,
   CORS_ORIGIN: parsed.data.CORS_ORIGIN,
+  JWT_SECRET: parsed.data.JWT_SECRET,
+  JWT_EXPIRES_IN: parsed.data.JWT_EXPIRES_IN,
 };

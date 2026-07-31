@@ -1,5 +1,8 @@
 const notFoundHandler = (req, res) => {
-  res.status(404).json({ error: 'Not Found' });
+  res.status(404).json({
+    success: false,
+    message: 'Not Found',
+  });
 };
 
 export default notFoundHandler;
