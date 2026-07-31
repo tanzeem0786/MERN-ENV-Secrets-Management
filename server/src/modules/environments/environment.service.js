@@ -1,0 +1,162 @@
+import mongoose from 'mongoose';
+import Environment from './environment.model.js';
+import Project from '../projects/project.model.js';
+import Organization from '../organizations/organization.model.js';
+import Membership from '../organizations/membership.model.js';
+
+const generateSlug = (name) => {
+  const base = name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .replace(/-+/g, '-');
+  return base || `environment-${Date.now()}`;
+};
+
+const ensureUniqueSlug = async (projectId, base, ignoreId = null) => {
+  let slug = base;
+  let count = 0;
+  const query = { projectId, slug };
+
+  while (await Environment.findOne(ignoreId ? { ...query, _id: { $ne: ignoreId } } : query)) {
+    count += 1;
+    slug = `${base}-${Math.random().toString(36).substring(2, 8)}${count}`;
+    if (count > 10) slug = `${base}-${Date.now()}`;
+    query.slug = slug;
+  }
+
+  return slug;
+};
+
+const ensureUniqueName = async (projectId, name, ignoreId = null) => {
+  const normalized = name.trim();
+  const query = {
+    projectId,
+    name: new RegExp(`^${normalized.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i'),
+  };
+  if (ignoreId) query._id = { $ne: ignoreId };
+
+  const existing = await Environment.findOne(query);
+  if (existing) {
+    const error = new Error('An environment with that name already exists in this project');
+    error.statusCode = 409;
+    throw error;
+  }
+};
+
+const verifyOrganizationMembership = async (organizationId, user) => {
+  if (!mongoose.Types.ObjectId.isValid(organizationId)) {
+    const error = new Error('Invalid organization id');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const organization = await Organization.findById(organizationId);
+  if (!organization) {
+    const error = new Error('Organization not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const membership = await Membership.findOne({ organizationId, userId: user._id });
+  if (!membership) {
+    const error = new Error('Access denied');
+    error.statusCode = 403;
+    throw error;
+  }
+
+  return organization;
+};
+
+const verifyProjectAccess = async (projectId, user) => {
+  if (!mongoose.Types.ObjectId.isValid(projectId)) {
+    const error = new Error('Invalid project id');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const project = await Project.findById(projectId);
+  if (!project) {
+    const error = new Error('Project not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  await verifyOrganizationMembership(project.organizationId, user);
+  return project;
+};
+
+const verifyEnvironmentAccess = async (environmentId, user) => {
+  if (!mongoose.Types.ObjectId.isValid(environmentId)) {
+    const error = new Error('Invalid environment id');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const environment = await Environment.findById(environmentId);
+  if (!environment) {
+    const error = new Error('Environment not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  await verifyProjectAccess(environment.projectId, user);
+  return environment;
+};
+
+export const createEnvironment = async ({ name, description, projectId }, user) => {
+  const project = await Project.findById(projectId);
+  if (!project) {
+    const error = new Error('Project not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  await verifyOrganizationMembership(project.organizationId, user);
+  await ensureUniqueName(project._id, name);
+
+  const baseSlug = generateSlug(name);
+  const slug = await ensureUniqueSlug(project._id, baseSlug);
+
+  return Environment.create({
+    name: name.trim(),
+    slug,
+    description: description || '',
+    projectId: project._id,
+    createdBy: user._id,
+  });
+};
+
+export const getEnvironmentsForProject = async (projectId, user) => {
+  await verifyProjectAccess(projectId, user);
+  return Environment.find({ projectId }).sort({ createdAt: -1 });
+};
+
+export const getEnvironmentById = async (environmentId, user) => {
+  const environment = await verifyEnvironmentAccess(environmentId, user);
+  return environment;
+};
+
+export const updateEnvironment = async (environmentId, updates, user) => {
+  const environment = await verifyEnvironmentAccess(environmentId, user);
+
+  if (updates.name) {
+    await ensureUniqueName(environment.projectId, updates.name, environment._id);
+    const baseSlug = generateSlug(updates.name);
+    environment.slug = await ensureUniqueSlug(environment.projectId, baseSlug, environment._id);
+    environment.name = updates.name.trim();
+  }
+
+  if (typeof updates.description === 'string') {
+    environment.description = updates.description;
+  }
+
+  await environment.save();
+  return environment;
+};
+
+export const deleteEnvironment = async (environmentId, user) => {
+  const environment = await verifyEnvironmentAccess(environmentId, user);
+  await Environment.findByIdAndDelete(environment._id);
+};
