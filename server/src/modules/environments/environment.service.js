@@ -3,6 +3,7 @@ import Environment from './environment.model.js';
 import Project from '../projects/project.model.js';
 import Organization from '../organizations/organization.model.js';
 import Membership from '../organizations/membership.model.js';
+import { logActivity } from '../audit/audit.service.js';
 
 const generateSlug = (name) => {
   const base = name
@@ -119,13 +120,26 @@ export const createEnvironment = async ({ name, description, projectId }, user) 
   const baseSlug = generateSlug(name);
   const slug = await ensureUniqueSlug(project._id, baseSlug);
 
-  return Environment.create({
+  const environment = await Environment.create({
     name: name.trim(),
     slug,
     description: description || '',
     projectId: project._id,
     createdBy: user._id,
   });
+
+  await logActivity({
+    userId: user._id,
+    organizationId: project.organizationId,
+    projectId: environment.projectId,
+    environmentId: environment._id,
+    action: 'ENVIRONMENT_CREATED',
+    resourceType: 'environment',
+    resourceName: environment.name,
+    metadata: { projectId: project._id.toString() },
+  });
+
+  return environment;
 };
 
 export const getEnvironmentsForProject = async (projectId, user) => {
@@ -153,10 +167,35 @@ export const updateEnvironment = async (environmentId, updates, user) => {
   }
 
   await environment.save();
+
+  const project = await Project.findById(environment.projectId);
+  await logActivity({
+    userId: user._id,
+    organizationId: project?.organizationId,
+    projectId: environment.projectId,
+    environmentId: environment._id,
+    action: 'ENVIRONMENT_UPDATED',
+    resourceType: 'environment',
+    resourceName: environment.name,
+    metadata: { updatedFields: Object.keys(updates) },
+  });
+
   return environment;
 };
 
 export const deleteEnvironment = async (environmentId, user) => {
   const environment = await verifyEnvironmentAccess(environmentId, user);
+  const project = await Project.findById(environment.projectId);
   await Environment.findByIdAndDelete(environment._id);
+
+  await logActivity({
+    userId: user._id,
+    organizationId: project?.organizationId,
+    projectId: environment.projectId,
+    environmentId: environment._id,
+    action: 'ENVIRONMENT_DELETED',
+    resourceType: 'environment',
+    resourceName: environment.name,
+    metadata: { projectId: environment.projectId.toString() },
+  });
 };

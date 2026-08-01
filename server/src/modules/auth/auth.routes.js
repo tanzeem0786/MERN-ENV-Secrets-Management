@@ -13,7 +13,7 @@ const router = express.Router();
 
 router.post('/register', validateRegister, asyncHandler(registerController));
 router.post('/login', validateLogin, asyncHandler(loginController));
-router.post('/logout', asyncHandler(logoutController));
+router.post('/logout', authenticate, asyncHandler(logoutController));
 router.get('/me', authenticate, asyncHandler(meController));
 
 export default router;

@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import Project from './project.model.js';
 import Organization from '../organizations/organization.model.js';
 import Membership from '../organizations/membership.model.js';
+import { logActivity } from '../audit/audit.service.js';
 
 const generateSlug = (name) => {
   const base = name
@@ -65,6 +66,16 @@ export const createProject = async ({ name, description, organizationId }, user)
     createdBy: user._id,
   });
 
+  await logActivity({
+    userId: user._id,
+    organizationId: organization._id,
+    projectId: project._id,
+    action: 'PROJECT_CREATED',
+    resourceType: 'project',
+    resourceName: project.name,
+    metadata: { organizationId: organization._id.toString() },
+  });
+
   return project;
 };
 
@@ -118,6 +129,17 @@ export const updateProject = async (projectId, updates, user) => {
   }
 
   await project.save();
+
+  await logActivity({
+    userId: user._id,
+    organizationId: project.organizationId,
+    projectId: project._id,
+    action: 'PROJECT_UPDATED',
+    resourceType: 'project',
+    resourceName: project.name,
+    metadata: { updatedFields: Object.keys(updates) },
+  });
+
   return project;
 };
 
@@ -137,4 +159,14 @@ export const deleteProject = async (projectId, user) => {
 
   await verifyOrganizationAccess(project.organizationId, user);
   await Project.findByIdAndDelete(project._id);
+
+  await logActivity({
+    userId: user._id,
+    organizationId: project.organizationId,
+    projectId: project._id,
+    action: 'PROJECT_DELETED',
+    resourceType: 'project',
+    resourceName: project.name,
+    metadata: { organizationId: project.organizationId.toString() },
+  });
 };

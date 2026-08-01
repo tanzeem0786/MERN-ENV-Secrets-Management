@@ -5,6 +5,7 @@ import Project from '../projects/project.model.js';
 import Organization from '../organizations/organization.model.js';
 import Membership from '../organizations/membership.model.js';
 import { encrypt, decrypt } from '../../security/encryption.js';
+import { logActivity } from '../audit/audit.service.js';
 
 const ensureUniqueKey = async (environmentId, key, ignoreId = null) => {
   const query = { environmentId, key };
@@ -115,6 +116,18 @@ export const createSecret = async ({ key, value, description, environmentId }, u
     createdBy: user._id,
   });
 
+  await logActivity({
+    userId: user._id,
+    organizationId: project.organizationId,
+    projectId: project._id,
+    environmentId: environment._id,
+    secretId: secret._id,
+    action: 'SECRET_CREATED',
+    resourceType: 'secret',
+    resourceName: secret.key,
+    metadata: { environmentId: environment._id.toString() },
+  });
+
   // Do not return sensitive fields
   const obj = secret.toObject();
   delete obj.encryptedValue;
@@ -173,12 +186,40 @@ export const revealSecret = async (secretId, user) => {
     throw error;
   }
 
-  await verifyOrganizationMembership(project.organizationId, user);
+  try {
+    await verifyOrganizationMembership(project.organizationId, user);
 
-  // Decrypt value
-  const plaintext = decrypt(secret.encryptedValue, secret.iv, secret.authTag);
+    // Decrypt value
+    const plaintext = decrypt(secret.encryptedValue, secret.iv, secret.authTag);
 
-  return { key: secret.key, value: plaintext, description: secret.description, createdAt: secret.createdAt, updatedAt: secret.updatedAt };
+    await logActivity({
+      userId: user._id,
+      organizationId: project.organizationId,
+      projectId: project._id,
+      environmentId: environment._id,
+      secretId: secret._id,
+      action: 'SECRET_REVEALED',
+      resourceType: 'secret',
+      resourceName: secret.key,
+      metadata: { environmentId: environment._id.toString() },
+    });
+
+    return { key: secret.key, value: plaintext, description: secret.description, createdAt: secret.createdAt, updatedAt: secret.updatedAt };
+  } catch (error) {
+    await logActivity({
+      userId: user._id,
+      organizationId: project.organizationId,
+      projectId: project._id,
+      environmentId: environment._id,
+      secretId: secret._id,
+      action: 'SECRET_REVEAL_DENIED',
+      resourceType: 'secret',
+      resourceName: secret.key,
+      status: 'denied',
+      metadata: { environmentId: environment._id.toString(), reason: error.message },
+    });
+    throw error;
+  }
 };
 
 export const updateSecret = async (secretId, updates, user) => {
@@ -229,6 +270,18 @@ export const updateSecret = async (secretId, updates, user) => {
 
   await secret.save();
 
+  await logActivity({
+    userId: user._id,
+    organizationId: project.organizationId,
+    projectId: project._id,
+    environmentId: environment._id,
+    secretId: secret._id,
+    action: 'SECRET_UPDATED',
+    resourceType: 'secret',
+    resourceName: secret.key,
+    metadata: { environmentId: environment._id.toString() },
+  });
+
   const obj = secret.toObject();
   delete obj.encryptedValue;
   delete obj.iv;
@@ -267,4 +320,16 @@ export const deleteSecret = async (secretId, user) => {
   await verifyOrganizationMembership(project.organizationId, user);
 
   await Secret.findByIdAndDelete(secret._id);
+
+  await logActivity({
+    userId: user._id,
+    organizationId: project.organizationId,
+    projectId: project._id,
+    environmentId: environment._id,
+    secretId: secret._id,
+    action: 'SECRET_DELETED',
+    resourceType: 'secret',
+    resourceName: secret.key,
+    metadata: { environmentId: environment._id.toString() },
+  });
 };

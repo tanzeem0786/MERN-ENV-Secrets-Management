@@ -1,4 +1,4 @@
-import { registerUser, loginUser } from './auth.service.js';
+import { registerUser, loginUser, logoutUser } from './auth.service.js';
 
 export const registerController = async (req, res) => {
   const { user, token } = await registerUser(req.body);
@@ -19,6 +19,10 @@ export const loginController = async (req, res) => {
 };
 
 export const logoutController = async (req, res) => {
+  if (req.user) {
+    await logoutUser(req.user._id, req);
+  }
+
   res.json({
     success: true,
     message: 'Logout successful. Discard the token on the client to complete logout.',

@@ -32,4 +32,5 @@ export const env = {
   CORS_ORIGIN: parsed.data.CORS_ORIGIN,
   JWT_SECRET: parsed.data.JWT_SECRET,
   JWT_EXPIRES_IN: parsed.data.JWT_EXPIRES_IN,
+  SECRET_ENCRYPTION_KEY: parsed.data.SECRET_ENCRYPTION_KEY,
 };

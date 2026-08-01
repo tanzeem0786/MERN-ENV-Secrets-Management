@@ -5,6 +5,7 @@ import orgRouter from './organizations/organization.routes.js';
 import projectRouter from './projects/project.routes.js';
 import environmentRouter from './environments/environment.routes.js';
 import secretRouter from './secrets/secret.routes.js';
+import auditRouter from './audit/audit.routes.js';
 
 const router = express.Router();
 
@@ -14,5 +15,6 @@ router.use('/organizations', orgRouter);
 router.use('/projects', projectRouter);
 router.use('/environments', environmentRouter);
 router.use('/secrets', secretRouter);
+router.use('/audit-logs', auditRouter);
 
 export default router;

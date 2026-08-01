@@ -1,6 +1,7 @@
 import User from '../../models/User.js';
 import { hashPassword, comparePassword } from '../../security/password.js';
 import { signToken } from '../../security/jwt.js';
+import { logActivity } from '../audit/audit.service.js';
 
 export const registerUser = async ({ name, email, password }) => {
   const existing = await User.findOne({ email });
@@ -35,9 +36,30 @@ export const loginUser = async ({ email, password }) => {
 
   const token = signToken({ userId: user._id.toString() });
 
+  await logActivity({
+    userId: user._id,
+    action: 'LOGIN',
+    resourceType: 'auth',
+    resourceName: 'login',
+    status: 'success',
+    metadata: { email },
+  });
+
   return { user, token };
 };
 
 export const getUserById = async (id) => {
   return User.findById(id);
+};
+
+export const logoutUser = async (userId, req) => {
+  await logActivity({
+    userId,
+    action: 'LOGOUT',
+    resourceType: 'auth',
+    resourceName: 'logout',
+    status: 'success',
+    ipAddress: req?.ip || '',
+    userAgent: req?.get?.('user-agent') || '',
+  });
 };
