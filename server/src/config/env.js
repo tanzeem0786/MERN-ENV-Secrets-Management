@@ -15,6 +15,7 @@ const envSchema = z.object({
   CORS_ORIGIN: z.string().min(1, 'CORS_ORIGIN is required'),
   JWT_SECRET: z.string().min(1, 'JWT_SECRET is required'),
   JWT_EXPIRES_IN: z.string().default('1h'),
+  SECRET_ENCRYPTION_KEY: z.string().min(1, 'SECRET_ENCRYPTION_KEY is required'),
 });
 
 const parsed = envSchema.safeParse(process.env);
