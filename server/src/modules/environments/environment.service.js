@@ -40,31 +40,23 @@ const ensureUniqueName = async (projectId, name, ignoreId = null) => {
 
   const existing = await Environment.findOne(query);
   if (existing) {
-    const error = new Error('An environment with that name already exists in this project');
-    error.statusCode = 409;
-    throw error;
+    return next(new ErrorHandler("An environment with that name already exists in this project!", 409));
   }
 };
 
 const verifyOrganizationMembership = async (organizationId, user) => {
   if (!mongoose.Types.ObjectId.isValid(organizationId)) {
-    const error = new Error('Invalid organization id');
-    error.statusCode = 400;
-    throw error;
+    return next(new ErrorHandler("Invalid Organization ID!", 400));
   }
 
   const organization = await Organization.findById(organizationId);
   if (!organization) {
-    const error = new Error('Organization not found');
-    error.statusCode = 404;
-    throw error;
+    return next(new ErrorHandler("Organization Not Found!", 404));
   }
 
   const membership = await Membership.findOne({ organizationId, userId: user._id });
   if (!membership) {
-    const error = new Error('Access denied');
-    error.statusCode = 403;
-    throw error;
+    return next(new ErrorHandler("Access Denied!", 403));
   }
 
   return organization;
@@ -72,16 +64,12 @@ const verifyOrganizationMembership = async (organizationId, user) => {
 
 const verifyProjectAccess = async (projectId, user) => {
   if (!mongoose.Types.ObjectId.isValid(projectId)) {
-    const error = new Error('Invalid project id');
-    error.statusCode = 400;
-    throw error;
+    return next(new ErrorHandler("Invalid Project ID!", 400));
   }
 
   const project = await Project.findById(projectId);
   if (!project) {
-    const error = new Error('Project not found');
-    error.statusCode = 404;
-    throw error;
+    return next(new ErrorHandler("Project Not Found!", 404));
   }
 
   await verifyOrganizationMembership(project.organizationId, user);
@@ -90,16 +78,12 @@ const verifyProjectAccess = async (projectId, user) => {
 
 const verifyEnvironmentAccess = async (environmentId, user) => {
   if (!mongoose.Types.ObjectId.isValid(environmentId)) {
-    const error = new Error('Invalid environment id');
-    error.statusCode = 400;
-    throw error;
+    return next(new ErrorHandler("Invalid Environment ID!", 400));
   }
 
   const environment = await Environment.findById(environmentId);
   if (!environment) {
-    const error = new Error('Environment not found');
-    error.statusCode = 404;
-    throw error;
+    return next(new ErrorHandler("Environment Not Found!", 404));
   }
 
   await verifyProjectAccess(environment.projectId, user);
@@ -109,9 +93,7 @@ const verifyEnvironmentAccess = async (environmentId, user) => {
 export const createEnvironment = async ({ name, description, projectId }, user) => {
   const project = await Project.findById(projectId);
   if (!project) {
-    const error = new Error('Project not found');
-    error.statusCode = 404;
-    throw error;
+    return next(new ErrorHandler("Project Not Found!", 404));
   }
 
   await verifyOrganizationMembership(project.organizationId, user);

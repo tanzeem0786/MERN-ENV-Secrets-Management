@@ -12,9 +12,7 @@ const ensureUniqueKey = async (environmentId, key, ignoreId = null) => {
   if (ignoreId) query._id = { $ne: ignoreId };
   const existing = await Secret.findOne(query);
   if (existing) {
-    const err = new Error('A secret with that key already exists in this environment');
-    err.statusCode = 409;
-    throw err;
+    return next(new ErrorHandler("A Secret with that Key already Exists in this Environment", 409));
   }
 };
 

@@ -46,7 +46,7 @@ export const logActivity = async ({
 }) => {
   const safeMetadata = sanitizeMetadata(metadata);
 
-  return AuditLog.create({
+  return await AuditLog.create({
     userId,
     organizationId,
     projectId,

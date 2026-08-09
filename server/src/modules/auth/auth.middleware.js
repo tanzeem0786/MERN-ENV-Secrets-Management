@@ -1,30 +1,31 @@
+import ErrorHandler from '../../middleware/errorHandler.js';
 import { verifyToken } from '../../security/jwt.js';
 import { getUserById } from './auth.service.js';
 
 export const authenticate = async (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    const err = new Error('Authorization token missing');
-    err.statusCode = 401;
-    return next(err);
+  const authHeader = req.headers.cookie || ''
+  const accessToken = authHeader.replace('accessToken=', '').trim() || '';
+  
+  if(!accessToken) {
+   return res.status(401).json({
+      success: false,
+      message: "Authorization Token Missing!"
+    })
   }
 
-  const token = authHeader.replace('Bearer ', '').trim();
   let payload;
-
   try {
-    payload = verifyToken(token);
+    payload = verifyToken(accessToken);
   } catch (error) {
-    const err = new Error('Invalid or expired token');
-    err.statusCode = 401;
-    return next(err);
+    return res.status(401).json({
+      success: false,
+      message: error.message || "Invalid or Expired Token!",
+    });
   }
 
   const user = await getUserById(payload.userId);
   if (!user) {
-    const err = new Error('User not found');
-    err.statusCode = 401;
-    return next(err);
+    return next(new ErrorHandler("User Not Found!", 404));
   }
 
   const safeUser = user.toObject();

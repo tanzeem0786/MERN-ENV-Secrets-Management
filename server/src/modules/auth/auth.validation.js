@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import formatError from '../../utils/formatError.js';
 
 const registerSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -10,13 +11,6 @@ const loginSchema = z.object({
   email: z.string().email('Invalid email'),
   password: z.string().min(1, 'Password is required'),
 });
-
-const formatError = (error) => {
-  if (error?.issues) {
-    return error.issues.map((issue) => issue.message).join('; ');
-  }
-  return error.message || 'Invalid request';
-};
 
 export const validateRegister = (req, res, next) => {
   try {

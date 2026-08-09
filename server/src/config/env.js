@@ -1,7 +1,10 @@
-import dotenv from 'dotenv';
+import {config} from 'dotenv';
 import { z } from 'zod';
+// import {} from '../../configs/.'
 
-dotenv.config();
+config({
+  path: "./configs/config.env"
+});
 
 const envSchema = z.object({
   NODE_ENV: z
@@ -21,7 +24,9 @@ const envSchema = z.object({
 const parsed = envSchema.safeParse(process.env);
 
 if (!parsed.success) {
-  const errorMessages = parsed.error.errors.map((issue) => issue.message).join('; ');
+  const errorMessages = parsed.error.errors
+    .map(issue => `${issue.path.join(".")} : ${issue.message}`)
+    .join("\n")
   throw new Error(`Environment validation failed: ${errorMessages}`);
 }
 

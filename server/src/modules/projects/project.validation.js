@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import ErrorHandler from '../../middleware/errorHandler.js';
+import formatError from '../../utils/formatError.js';
 
 const createSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters').max(50, 'Name must be 50 characters or less'),
@@ -15,19 +17,17 @@ const querySchema = z.object({
   organizationId: z.string().min(1, 'organizationId query param is required'),
 });
 
-const formatError = (error) => {
-  if (error?.issues) return error.issues.map((issue) => issue.message).join('; ');
-  return error.message || 'Invalid request';
-};
-
 export const validateCreateProject = (req, res, next) => {
   try {
     req.body = createSchema.parse(req.body);
     return next();
   } catch (err) {
-    const error = new Error(formatError(err));
-    error.statusCode = 400;
-    return next(error);
+    const errorMessage = formatError(err);
+    return res.status(400).json({
+      success: false,
+      message: errorMessage
+    });
+    // return next(new ErrorHandler(errorMessage, 400));
   }
 };
 
@@ -36,9 +36,12 @@ export const validateUpdateProject = (req, res, next) => {
     req.body = updateSchema.parse(req.body);
     return next();
   } catch (err) {
-    const error = new Error(formatError(err));
-    error.statusCode = 400;
-    return next(error);
+    const errorMessage = formatError(err);
+    return res.status(400).json({
+      success: false,
+      message: errorMessage
+    });
+    // return next(new ErrorHandler(errorMessage, 400));
   }
 };
 
@@ -47,8 +50,11 @@ export const validateProjectQuery = (req, res, next) => {
     req.query = querySchema.parse(req.query);
     return next();
   } catch (err) {
-    const error = new Error(formatError(err));
-    error.statusCode = 400;
-    return next(error);
+    const errorMessage = formatError(err);
+    return res.status(400).json({
+      success: false,
+      message: errorMessage
+    });
+    // return next(new ErrorHandler(errorMessage, 400));
   }
 };

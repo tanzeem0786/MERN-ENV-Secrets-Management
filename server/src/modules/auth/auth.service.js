@@ -2,13 +2,12 @@ import User from '../../models/User.js';
 import { hashPassword, comparePassword } from '../../security/password.js';
 import { signToken } from '../../security/jwt.js';
 import { logActivity } from '../audit/audit.service.js';
+import ErrorHandler from '../../middleware/errorHandler.js';
 
 export const registerUser = async ({ name, email, password }) => {
   const existing = await User.findOne({ email });
   if (existing) {
-    const err = new Error('Email already in use');
-    err.statusCode = 409;
-    throw err;
+    return next(new ErrorHandler("Email Already in Use!", 409));
   }
 
   const hashed = await hashPassword(password);
@@ -22,16 +21,12 @@ export const registerUser = async ({ name, email, password }) => {
 export const loginUser = async ({ email, password }) => {
   const user = await User.findOne({ email });
   if (!user) {
-    const err = new Error('Invalid email or password');
-    err.statusCode = 401;
-    throw err;
+    return next(new ErrorHandler('Invalid email or password', 401));
   }
 
   const valid = await comparePassword(password, user.password);
   if (!valid) {
-    const err = new Error('Invalid email or password');
-    err.statusCode = 401;
-    throw err;
+   return next(new ErrorHandler('Invalid email or password', 401));
   }
 
   const token = signToken({ userId: user._id.toString() });
@@ -53,7 +48,7 @@ export const getUserById = async (id) => {
 };
 
 export const logoutUser = async (userId, req) => {
-  await logActivity({
+    await logActivity({
     userId,
     action: 'LOGOUT',
     resourceType: 'auth',

@@ -11,7 +11,12 @@ export const registerController = async (req, res) => {
 
 export const loginController = async (req, res) => {
   const { user, token } = await loginUser(req.body);
-  res.json({
+  res.status(200).cookie("accessToken", token, {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "strict",
+  maxAge: 1000 * 60 * 60, // 1 hour
+}).json({
     success: true,
     message: 'Login successful',
     data: { user, token },
@@ -22,8 +27,7 @@ export const logoutController = async (req, res) => {
   if (req.user) {
     await logoutUser(req.user._id, req);
   }
-
-  res.json({
+  res.status(200).cookie("accessToken", "").json({
     success: true,
     message: 'Logout successful. Discard the token on the client to complete logout.',
   });

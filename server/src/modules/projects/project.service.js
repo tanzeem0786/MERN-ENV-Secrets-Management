@@ -3,6 +3,7 @@ import Project from './project.model.js';
 import Organization from '../organizations/organization.model.js';
 import Membership from '../organizations/membership.model.js';
 import { logActivity } from '../audit/audit.service.js';
+import ErrorHandler from '../../middleware/errorHandler.js';
 
 const generateSlug = (name) => {
   const base = name
@@ -30,23 +31,17 @@ const ensureUniqueSlug = async (organizationId, base, ignoreId = null) => {
 
 const verifyOrganizationAccess = async (organizationId, user) => {
   if (!mongoose.Types.ObjectId.isValid(organizationId)) {
-    const error = new Error('Invalid organizationId');
-    error.statusCode = 400;
-    throw error;
+    return next(new ErrorHandler("Invalid Organization ID!", 400));
   }
 
   const organization = await Organization.findById(organizationId);
   if (!organization) {
-    const error = new Error('Organization not found');
-    error.statusCode = 404;
-    throw error;
+    return next(new ErrorHandler("Organization Not Found!", 404));
   }
 
   const membership = await Membership.findOne({ organizationId, userId: user._id });
   if (!membership) {
-    const error = new Error('Access denied');
-    error.statusCode = 403;
-    throw error;
+    return next(new ErrorHandler("Access Denied!", 403));
   }
 
   return organization;
@@ -86,16 +81,12 @@ export const getProjectsForOrganization = async (organizationId, user) => {
 
 export const getProjectById = async (projectId, user) => {
   if (!mongoose.Types.ObjectId.isValid(projectId)) {
-    const error = new Error('Invalid project id');
-    error.statusCode = 400;
-    throw error;
+    return next(new ErrorHandler("Invalid Project ID!", 400));
   }
 
   const project = await Project.findById(projectId);
   if (!project) {
-    const error = new Error('Project not found');
-    error.statusCode = 404;
-    throw error;
+    return next(new ErrorHandler("Project Not Found!", 404));
   }
 
   await verifyOrganizationAccess(project.organizationId, user);
@@ -104,16 +95,12 @@ export const getProjectById = async (projectId, user) => {
 
 export const updateProject = async (projectId, updates, user) => {
   if (!mongoose.Types.ObjectId.isValid(projectId)) {
-    const error = new Error('Invalid project id');
-    error.statusCode = 400;
-    throw error;
+    return next(new ErrorHandler("Invalid Project ID!", 400));
   }
 
   const project = await Project.findById(projectId);
   if (!project) {
-    const error = new Error('Project not found');
-    error.statusCode = 404;
-    throw error;
+    return next(new ErrorHandler("Project Not Found!", 404));
   }
 
   await verifyOrganizationAccess(project.organizationId, user);
@@ -145,16 +132,12 @@ export const updateProject = async (projectId, updates, user) => {
 
 export const deleteProject = async (projectId, user) => {
   if (!mongoose.Types.ObjectId.isValid(projectId)) {
-    const error = new Error('Invalid project id');
-    error.statusCode = 400;
-    throw error;
+    return next(new ErrorHandler("Invalid Project ID!", 400));
   }
 
   const project = await Project.findById(projectId);
   if (!project) {
-    const error = new Error('Project not found');
-    error.statusCode = 404;
-    throw error;
+    return next(new ErrorHandler("Project Not Found!", 404));
   }
 
   await verifyOrganizationAccess(project.organizationId, user);
