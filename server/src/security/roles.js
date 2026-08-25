@@ -1,0 +1,43 @@
+import { ALL_PERMISSIONS, PERMISSIONS } from './permissions.js';
+
+export const ROLES = Object.freeze({
+  OWNER: 'owner',
+  ADMIN: 'admin',
+  DEVELOPER: 'developer',
+  VIEWER: 'viewer',
+});
+
+const readPermissions = [
+  PERMISSIONS.ORGANIZATION_READ,
+  PERMISSIONS.PROJECT_READ,
+  PERMISSIONS.ENVIRONMENT_READ,
+  PERMISSIONS.SECRET_READ,
+  PERMISSIONS.AUDIT_READ,
+];
+
+export const ROLE_PERMISSIONS = Object.freeze({
+  [ROLES.OWNER]: ALL_PERMISSIONS,
+  [ROLES.ADMIN]: [
+    ...readPermissions,
+    PERMISSIONS.PROJECT_CREATE,
+    PERMISSIONS.PROJECT_UPDATE,
+    PERMISSIONS.PROJECT_DELETE,
+    PERMISSIONS.ENVIRONMENT_CREATE,
+    PERMISSIONS.ENVIRONMENT_UPDATE,
+    PERMISSIONS.ENVIRONMENT_DELETE,
+    PERMISSIONS.SECRET_CREATE,
+    PERMISSIONS.SECRET_UPDATE,
+    PERMISSIONS.SECRET_DELETE,
+    PERMISSIONS.SECRET_REVEAL,
+  ],
+  [ROLES.DEVELOPER]: [
+    ...readPermissions,
+    PERMISSIONS.SECRET_CREATE,
+    PERMISSIONS.SECRET_UPDATE,
+    PERMISSIONS.SECRET_REVEAL,
+  ],
+  [ROLES.VIEWER]: readPermissions,
+});
+
+export const roleHasPermission = (role, permission) =>
+  ROLE_PERMISSIONS[role]?.includes(permission) ?? false;

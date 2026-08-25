@@ -3,7 +3,7 @@ import { getAuditLogs } from './audit.service.js';
 
 export const getAuditLogsController = async (req, res) => {
   const result = await getAuditLogs({
-    userId: req.query.userId,
+    organizationId: req.organizationId,
     action: req.query.action,
     projectId: req.query.projectId,
     page: req.query.page,

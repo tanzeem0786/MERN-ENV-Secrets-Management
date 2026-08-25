@@ -62,8 +62,8 @@ export const logActivity = async ({
   });
 };
 
-export const getAuditLogs = async ({ userId, action, projectId, page = 1, limit = 20 }) => {
-  const filter = {};
+export const getAuditLogs = async ({ organizationId, userId, action, projectId, page = 1, limit = 20 }) => {
+  const filter = { organizationId };
   if (userId) filter.userId = userId;
   if (action) filter.action = action;
   if (projectId) filter.projectId = projectId;

@@ -4,7 +4,7 @@ const membershipSchema = new mongoose.Schema(
   {
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     organizationId: { type: mongoose.Schema.Types.ObjectId, ref: 'Organization', required: true, index: true },
-    role: { type: String, enum: ['owner', 'admin', 'member'], default: 'member' },
+    role: { type: String, enum: ['owner', 'admin', 'developer', 'viewer'], default: 'viewer' },
   },
   { timestamps: true }
 );
