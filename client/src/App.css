@@ -455,6 +455,21 @@ time {
   align-items: center;
   gap: 12px;
 }
+.row-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+.inline-edit-panel {
+  display: grid;
+  gap: 12px;
+  width: 100%;
+}
+.inline-form {
+  display: grid;
+  gap: 10px;
+}
 .text-button,
 .hide-link {
   border: 0;

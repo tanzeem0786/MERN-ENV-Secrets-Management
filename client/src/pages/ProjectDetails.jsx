@@ -18,6 +18,8 @@ export default function ProjectDetails() {
   const [project, setProject] = useState(null);
   const [envs, setEnvs] = useState([]);
   const [form, setForm] = useState("");
+  const [editingId, setEditingId] = useState(null);
+  const [editingForm, setEditingForm] = useState({ name: "" });
   const [error, setError] = useState("");
 
   const load = () =>
@@ -36,6 +38,22 @@ export default function ProjectDetails() {
     try {
       await environmentApi.create({ name: form, projectId });
       setForm("");
+      await load();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
+  };
+
+  const startEditEnv = (env) => {
+    setEditingId(env._id);
+    setEditingForm({ name: env.name });
+  };
+
+  const saveEnv = async (id) => {
+    try {
+      setError("");
+      await environmentApi.update(id, { name: editingForm.name });
+      setEditingId(null);
       await load();
     } catch (err) {
       setError(getErrorMessage(err));
@@ -79,22 +97,66 @@ export default function ProjectDetails() {
               envs.map((env) => (
                 <div className="project-row" key={env._id}>
                   <div className="env-symbol">⌁</div>
-                  <div>
-                    <Link to={`/projects/${projectId}/environments/${env._id}`}>
-                      <b>{env.name}</b>
-                    </Link>
-                    <span>
-                      {env.description || "Ready for secrets"} · {env.slug}
-                    </span>
-                  </div>
-                  {can(role, "environment:delete") && (
-                    <button
-                      className="icon-button danger"
-                      onClick={() => removeEnv(env._id)}
-                      aria-label={`Delete ${env.name}`}
-                    >
-                      ×
-                    </button>
+                  {editingId === env._id ? (
+                    <div className="inline-edit-panel">
+                      <div className="inline-form">
+                        <Field
+                          label="Environment name"
+                          value={editingForm.name}
+                          onChange={(e) =>
+                            setEditingForm({ name: e.target.value })
+                          }
+                        />
+                      </div>
+                      <div className="row-actions">
+                        <button
+                          type="button"
+                          className="text-button"
+                          onClick={() => saveEnv(env._id)}
+                        >
+                          Save
+                        </button>
+                        <button
+                          type="button"
+                          className="text-button"
+                          onClick={() => setEditingId(null)}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div>
+                        <Link to={`/projects/${projectId}/environments/${env._id}`}>
+                          <b>{env.name}</b>
+                        </Link>
+                        <span>
+                          {env.description || "Ready for secrets"} · {env.slug}
+                        </span>
+                      </div>
+                      <div className="row-actions">
+                        {can(role, "environment:update") && (
+                          <button
+                            type="button"
+                            className="text-button"
+                            onClick={() => startEditEnv(env)}
+                          >
+                            Edit
+                          </button>
+                        )}
+                        {can(role, "environment:delete") && (
+                          <button
+                            className="icon-button danger"
+                            onClick={() => removeEnv(env._id)}
+                            aria-label={`Delete ${env.name}`}
+                            type="button"
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
+                    </>
                   )}
                 </div>
               ))

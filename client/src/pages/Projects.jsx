@@ -20,6 +20,8 @@ export default function Projects() {
   const role = useSelector((state) => state.auth.user?.role);
   const [projects, setProjects] = useState([]);
   const [form, setForm] = useState({ name: "", description: "" });
+  const [editingId, setEditingId] = useState(null);
+  const [editingForm, setEditingForm] = useState({ name: "", description: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const canCreate = can(role, "project:create");
@@ -46,6 +48,25 @@ export default function Projects() {
       setError(getErrorMessage(err));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const startEdit = (project) => {
+    setEditingId(project._id);
+    setEditingForm({ name: project.name, description: project.description || "" });
+  };
+
+  const saveProject = async (id) => {
+    try {
+      setError("");
+      await projectApi.update(id, {
+        name: editingForm.name,
+        description: editingForm.description,
+      });
+      setEditingId(null);
+      await load();
+    } catch (err) {
+      setError(getErrorMessage(err));
     }
   };
 
@@ -77,22 +98,76 @@ export default function Projects() {
                   <div className="project-symbol">
                     {project.name.slice(0, 1).toUpperCase()}
                   </div>
-                  <div>
-                    <Link to={`/projects/${project._id}`}>
-                      <b>{project.name}</b>
-                    </Link>
-                    <span>
-                      {project.description || "No description"} · {project.slug}
-                    </span>
-                  </div>
-                  {can(role, "project:delete") && (
-                    <button
-                      className="icon-button danger"
-                      aria-label={`Delete ${project.name}`}
-                      onClick={() => remove(project._id)}
-                    >
-                      ×
-                    </button>
+                  {editingId === project._id ? (
+                    <div className="inline-edit-panel">
+                      <div className="inline-form">
+                        <Field
+                          label="Project name"
+                          value={editingForm.name}
+                          onChange={(e) =>
+                            setEditingForm({ ...editingForm, name: e.target.value })
+                          }
+                        />
+                        <Field
+                          label="Description"
+                          value={editingForm.description}
+                          onChange={(e) =>
+                            setEditingForm({
+                              ...editingForm,
+                              description: e.target.value,
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="row-actions">
+                        <button
+                          type="button"
+                          className="text-button"
+                          onClick={() => saveProject(project._id)}
+                        >
+                          Save
+                        </button>
+                        <button
+                          type="button"
+                          className="text-button"
+                          onClick={() => setEditingId(null)}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div>
+                        <Link to={`/projects/${project._id}`}>
+                          <b>{project.name}</b>
+                        </Link>
+                        <span>
+                          {project.description || "No description"} · {project.slug}
+                        </span>
+                      </div>
+                      <div className="row-actions">
+                        {can(role, "project:update") && (
+                          <button
+                            type="button"
+                            className="text-button"
+                            onClick={() => startEdit(project)}
+                          >
+                            Edit
+                          </button>
+                        )}
+                        {can(role, "project:delete") && (
+                          <button
+                            type="button"
+                            className="icon-button danger"
+                            aria-label={`Delete ${project.name}`}
+                            onClick={() => remove(project._id)}
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
+                    </>
                   )}
                 </div>
               ))

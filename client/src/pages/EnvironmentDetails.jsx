@@ -18,7 +18,10 @@ export default function EnvironmentDetails() {
   const [environment, setEnvironment] = useState(null);
   const [secrets, setSecrets] = useState([]);
   const [form, setForm] = useState({ key: "", value: "", description: "" });
+  const [editingId, setEditingId] = useState(null);
+  const [editingForm, setEditingForm] = useState({ key: "", value: "", description: "" });
   const [revealed, setRevealed] = useState({});
+  const [copiedId, setCopiedId] = useState(null);
   const [error, setError] = useState("");
 
   const load = () =>
@@ -34,7 +37,10 @@ export default function EnvironmentDetails() {
 
   useEffect(() => {
     load();
-    return () => setRevealed({});
+    return () => {
+      setRevealed({});
+      setCopiedId(null);
+    };
   }, [environmentId]);
 
   const create = async (e) => {
@@ -52,7 +58,8 @@ export default function EnvironmentDetails() {
   const reveal = async (id) => {
     try {
       const response = await secretApi.reveal(id);
-      setRevealed({ [id]: response.data.data.secret.value });
+      setRevealed((current) => ({ ...current, [id]: response.data.data.secret.value }));
+      setCopiedId(null);
     } catch (err) {
       setError(getErrorMessage(err));
     }
@@ -64,6 +71,39 @@ export default function EnvironmentDetails() {
       delete next[id];
       return next;
     });
+
+  const copyValue = async (id, value) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopiedId(id);
+    } catch (err) {
+      setError(getErrorMessage(err, "Unable to copy the secret value."));
+    }
+  };
+
+  const startEditSecret = (secret) => {
+    setEditingId(secret._id);
+    setEditingForm({
+      key: secret.key,
+      value: "",
+      description: secret.description || "",
+    });
+  };
+
+  const saveSecret = async (id) => {
+    try {
+      setError("");
+      await secretApi.update(id, {
+        key: editingForm.key,
+        value: editingForm.value || undefined,
+        description: editingForm.description,
+      });
+      setEditingId(null);
+      await load();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
+  };
 
   const remove = async (id) => {
     if (!window.confirm("Delete this secret?")) return;
@@ -100,36 +140,106 @@ export default function EnvironmentDetails() {
             {secrets.length ? (
               secrets.map((secret) => (
                 <div className="secret-row" key={secret._id}>
-                  <div>
-                    <b>{secret.key}</b>
-                    <span>
-                      {revealed[secret._id] ?? "••••••••••••••••"}
-                      {revealed[secret._id] && (
-                        <button className="hide-link" onClick={() => hide(secret._id)}>
-                          hide
+                  {editingId === secret._id ? (
+                    <div className="inline-edit-panel">
+                      <div className="inline-form">
+                        <Field
+                          label="Key"
+                          value={editingForm.key}
+                          onChange={(e) =>
+                            setEditingForm({ ...editingForm, key: e.target.value })
+                          }
+                        />
+                        <Field
+                          label="Value (optional)"
+                          type="password"
+                          value={editingForm.value}
+                          onChange={(e) =>
+                            setEditingForm({ ...editingForm, value: e.target.value })
+                          }
+                        />
+                        <Field
+                          label="Description"
+                          value={editingForm.description}
+                          onChange={(e) =>
+                            setEditingForm({
+                              ...editingForm,
+                              description: e.target.value,
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="row-actions">
+                        <button
+                          type="button"
+                          className="text-button"
+                          onClick={() => saveSecret(secret._id)}
+                        >
+                          Save
                         </button>
-                      )}
-                    </span>
-                  </div>
-                  <div className="secret-actions">
-                    {can(role, "secret:reveal") && !revealed[secret._id] && (
-                      <button
-                        className="text-button"
-                        onClick={() => reveal(secret._id)}
-                      >
-                        Reveal
-                      </button>
-                    )}
-                    {can(role, "secret:delete") && (
-                      <button
-                        className="icon-button danger"
-                        onClick={() => remove(secret._id)}
-                        aria-label={`Delete ${secret.key}`}
-                      >
-                        ×
-                      </button>
-                    )}
-                  </div>
+                        <button
+                          type="button"
+                          className="text-button"
+                          onClick={() => setEditingId(null)}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div>
+                        <b>{secret.key}</b>
+                        <span>
+                          {revealed[secret._id] ?? "••••••••••••••••"}
+                          {revealed[secret._id] && (
+                            <button className="hide-link" onClick={() => hide(secret._id)}>
+                              hide
+                            </button>
+                          )}
+                        </span>
+                      </div>
+                      <div className="secret-actions">
+                        {can(role, "secret:reveal") && !revealed[secret._id] && (
+                          <button
+                            className="text-button"
+                            onClick={() => reveal(secret._id)}
+                            type="button"
+                          >
+                            Reveal
+                          </button>
+                        )}
+                        {revealed[secret._id] && (
+                          <button
+                            className="text-button"
+                            onClick={() => copyValue(secret._id, revealed[secret._id])}
+                            type="button"
+                          >
+                            {copiedId === secret._id ? "Copied" : "Copy"}
+                          </button>
+                        )}
+                        {can(role, "secret:update") && (
+                          <button
+                            className="text-button"
+                            onClick={() => startEditSecret(secret)}
+                            type="button"
+                          >
+                            Edit
+                          </button>
+                        )}
+                        {can(role, "secret:delete") && (
+                          <button
+                            className="icon-button danger"
+                            onClick={() => remove(secret._id)}
+                            aria-label={`Delete ${secret.key}`}
+                            type="button"
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
+                    </>
+                  )}
                 </div>
               ))
             ) : (
