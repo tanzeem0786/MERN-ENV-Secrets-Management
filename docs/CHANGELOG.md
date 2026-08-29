@@ -70,3 +70,16 @@ For meaningful changes, record:
 
 ### Documentation
 - documented the M8.5 test commands, API specification, collection, and remaining production considerations
+
+## 2026-08-29 — Local CORS origin alignment
+
+### Changed
+- aligned the backend `CORS_ORIGIN` value with the active frontend dev origin at `http://127.0.0.1:5173`
+- verified the app now returns the allow-origin header for the live frontend origin instead of rejecting the request as a mismatched origin
+
+### Security impact
+- preserves credentialed cookie authentication without broadening the allowed origin list
+- keeps the CORS policy explicit and scoped to the actual local dev frontend
+
+### Documentation
+- recorded the root-cause fix for the browser-origin mismatch observed during login/session verification

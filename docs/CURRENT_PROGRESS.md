@@ -57,6 +57,10 @@ Implemented centralized permissions for `owner`, `admin`, `developer`, and `view
 
 Implemented server-local Vitest, Supertest, and MongoDB Memory Server coverage for authentication, tenant isolation, CRUD flows, secret leakage, encryption integrity, RBAC, audit behavior, validation, and rate limiting. Added OpenAPI and Postman documentation under `server/docs/`.
 
+### Local frontend origin alignment
+
+Verified the backend CORS configuration matches the live Vite frontend origin (`http://127.0.0.1:5173`) so credentialed cookie-based requests are accepted without an origin mismatch.
+
 ## Important open items
 
 Verify in the actual code before claiming completion:
