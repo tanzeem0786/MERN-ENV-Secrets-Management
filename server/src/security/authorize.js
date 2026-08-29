@@ -1,6 +1,7 @@
 import Project from '../modules/projects/project.model.js';
 import Environment from '../modules/environments/environment.model.js';
 import Secret from '../modules/secrets/secret.model.js';
+import mongoose from 'mongoose';
 import Membership from '../modules/organizations/membership.model.js';
 import { logActivity } from '../modules/audit/audit.service.js';
 import { roleHasPermission } from './roles.js';
@@ -10,6 +11,8 @@ const getOrganizationId = async (req) => {
   if (directOrganizationId) return directOrganizationId;
 
   if (req.params.id) {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) return null;
+    if (req.baseUrl.endsWith('/organizations')) return req.params.id;
     if (req.baseUrl.endsWith('/projects')) return (await Project.findById(req.params.id))?.organizationId;
     if (req.baseUrl.endsWith('/environments')) {
       const environment = await Environment.findById(req.params.id);
@@ -22,8 +25,12 @@ const getOrganizationId = async (req) => {
     }
   }
 
-  if (req.query.projectId) return (await Project.findById(req.query.projectId))?.organizationId;
+  if (req.query.projectId) {
+    if (!mongoose.Types.ObjectId.isValid(req.query.projectId)) return null;
+    return (await Project.findById(req.query.projectId))?.organizationId;
+  }
   if (req.query.environmentId) {
+    if (!mongoose.Types.ObjectId.isValid(req.query.environmentId)) return null;
     const environment = await Environment.findById(req.query.environmentId);
     return (await Project.findById(environment?.projectId))?.organizationId;
   }
@@ -50,17 +57,21 @@ const recordDenied = async (req, permission, organizationId) => {
 };
 
 export const authorize = (permission) => async (req, res, next) => {
-  const organizationId = await getOrganizationId(req);
-  const membership = organizationId
-    ? await Membership.findOne({ organizationId, userId: req.user._id })
-    : await Membership.findOne({ userId: req.user._id });
+  try {
+    const organizationId = await getOrganizationId(req);
+    const membership = organizationId
+      ? await Membership.findOne({ organizationId, userId: req.user._id })
+      : await Membership.findOne({ userId: req.user._id });
 
-  if (!membership || !roleHasPermission(membership.role, permission)) {
-    await recordDenied(req, permission, organizationId || membership?.organizationId);
-    return res.status(403).json({ success: false, message: 'Forbidden' });
+    if (!membership || !roleHasPermission(membership.role, permission)) {
+      await recordDenied(req, permission, organizationId || membership?.organizationId);
+      return res.status(403).json({ success: false, message: 'Forbidden' });
+    }
+
+    req.membership = membership;
+    req.organizationId = membership.organizationId;
+    return next();
+  } catch (error) {
+    return next(error);
   }
-
-  req.membership = membership;
-  req.organizationId = membership.organizationId;
-  next();
 };

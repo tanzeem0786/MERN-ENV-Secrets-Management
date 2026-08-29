@@ -6,13 +6,14 @@ import Organization from '../organizations/organization.model.js';
 import Membership from '../organizations/membership.model.js';
 import { encrypt, decrypt } from '../../security/encryption.js';
 import { logActivity } from '../audit/audit.service.js';
+import ErrorHandler from '../../middleware/errorHandler.js';
 
 const ensureUniqueKey = async (environmentId, key, ignoreId = null) => {
   const query = { environmentId, key };
   if (ignoreId) query._id = { $ne: ignoreId };
   const existing = await Secret.findOne(query);
   if (existing) {
-    return next(new ErrorHandler("A Secret with that Key already Exists in this Environment", 409));
+    throw new ErrorHandler('A Secret with that Key already Exists in this Environment', 409);
   }
 };
 

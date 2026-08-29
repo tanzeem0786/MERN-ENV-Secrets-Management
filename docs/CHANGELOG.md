@@ -51,3 +51,22 @@ For meaningful changes, record:
 ### Documentation
 - documented the RBAC matrix and protected routes
 - reconciled the explicit RBAC M8 request with the older roadmap label for M8 frontend integration
+
+## 2026-08-28 — Milestone 8.5 Backend hardening
+
+### Changed
+- added server-local Vitest, Supertest, and MongoDB Memory Server test infrastructure
+- added encryption, authentication, API isolation, RBAC, audit, leakage, and rate-limit tests
+- stopped returning access JWTs in registration/login JSON responses
+- hardened cookie parsing, cookie clearing, credentialed CORS, and authentication rate limiting
+- repaired expected service errors to use the existing custom `ErrorHandler`
+- added OpenAPI and Postman documentation under `server/docs/`
+
+### Security impact
+- test data uses an isolated in-memory MongoDB instance and generated test keys
+- normal secret responses are verified to exclude plaintext and encryption internals
+- audit reads are tenant-scoped and denied operations are verified as `PERMISSION_DENIED`
+- authentication errors no longer expose token details or credentials
+
+### Documentation
+- documented the M8.5 test commands, API specification, collection, and remaining production considerations

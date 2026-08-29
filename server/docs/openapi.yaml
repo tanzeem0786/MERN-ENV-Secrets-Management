@@ -1,0 +1,98 @@
+openapi: 3.0.3
+info:
+  title: MERNSecrets API
+  version: 0.1.0
+  description: Authentication, organization, project, environment, secret, audit, and RBAC API.
+servers:
+  - url: http://localhost:4000/api
+components:
+  securitySchemes:
+    accessCookie:
+      type: apiKey
+      in: cookie
+      name: accessToken
+  schemas:
+    Error:
+      type: object
+      required: [success, message]
+      properties:
+        success: { type: boolean, example: false }
+        message: { type: string, example: Forbidden }
+  responses:
+    BadRequest:
+      description: Invalid request data
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    Unauthorized:
+      description: Authentication required or invalid
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    Forbidden:
+      description: Permission denied
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    NotFound:
+      description: Resource not found
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    Conflict:
+      description: Duplicate resource
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    TooManyRequests:
+      description: Authentication rate limit exceeded
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+paths:
+  /auth/register:
+    post:
+      summary: Register a user
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, required: [name, email, password], properties: { name: { type: string }, email: { type: string, format: email }, password: { type: string, format: password } } } } }
+      responses: { '201': { description: Registered without returning credentials }, '400': { $ref: '#/components/responses/BadRequest' }, '409': { $ref: '#/components/responses/Conflict' }, '429': { $ref: '#/components/responses/TooManyRequests' } }
+  /auth/login:
+    post:
+      summary: Log in and set the HttpOnly access cookie
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, required: [email, password], properties: { email: { type: string, format: email }, password: { type: string, format: password } } } } }
+      responses: { '200': { description: Logged in; Set-Cookie contains accessToken }, '400': { $ref: '#/components/responses/BadRequest' }, '401': { $ref: '#/components/responses/Unauthorized' }, '429': { $ref: '#/components/responses/TooManyRequests' } }
+  /auth/logout:
+    post:
+      security: [{ accessCookie: [] }]
+      responses: { '200': { description: Logged out }, '401': { $ref: '#/components/responses/Unauthorized' } }
+  /auth/me:
+    get:
+      security: [{ accessCookie: [] }]
+      responses: { '200': { description: Current user }, '401': { $ref: '#/components/responses/Unauthorized' } }
+  /organizations:
+    post:
+      security: [{ accessCookie: [] }]
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [name], properties: { name: { type: string } } } } } }
+      responses: { '201': { description: Created }, '400': { $ref: '#/components/responses/BadRequest' }, '401': { $ref: '#/components/responses/Unauthorized' } }
+  /organizations/mine:
+    get:
+      security: [{ accessCookie: [] }]
+      responses: { '200': { description: Organizations for current user }, '401': { $ref: '#/components/responses/Unauthorized' }, '403': { $ref: '#/components/responses/Forbidden' } }
+  /organizations/{id}:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    get: { security: [{ accessCookie: [] }], responses: { '200': { description: Organization }, '400': { $ref: '#/components/responses/BadRequest' }, '401': { $ref: '#/components/responses/Unauthorized' }, '403': { $ref: '#/components/responses/Forbidden' }, '404': { $ref: '#/components/responses/NotFound' } } }
+    put: { security: [{ accessCookie: [] }], requestBody: { content: { application/json: { schema: { type: object, properties: { name: { type: string } } } } } }, responses: { '200': { description: Updated }, '400': { $ref: '#/components/responses/BadRequest' }, '401': { $ref: '#/components/responses/Unauthorized' }, '403': { $ref: '#/components/responses/Forbidden' } } }
+    delete: { security: [{ accessCookie: [] }], responses: { '200': { description: Deleted }, '401': { $ref: '#/components/responses/Unauthorized' }, '403': { $ref: '#/components/responses/Forbidden' } } }
+  /projects:
+    get: { security: [{ accessCookie: [] }], parameters: [{ name: organizationId, in: query, required: true, schema: { type: string } }], responses: { '200': { description: Project list }, '400': { $ref: '#/components/responses/BadRequest' }, '401': { $ref: '#/components/responses/Unauthorized' }, '403': { $ref: '#/components/responses/Forbidden' } } }
+    post: { security: [{ accessCookie: [] }], requestBody: { required: true, content: { application/json: { schema: { type: object, required: [name, organizationId], properties: { name: { type: string }, description: { type: string }, organizationId: { type: string } } } } } }, responses: { '201': { description: Created }, '400': { $ref: '#/components/responses/BadRequest' }, '401': { $ref: '#/components/responses/Unauthorized' }, '403': { $ref: '#/components/responses/Forbidden' }, '409': { $ref: '#/components/responses/Conflict' } } }
+  /projects/{id}:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    get: { security: [{ accessCookie: [] }], responses: { '200': { description: Project }, '400': { $ref: '#/components/responses/BadRequest' }, '401': { $ref: '#/components/responses/Unauthorized' }, '403': { $ref: '#/components/responses/Forbidden' }, '404': { $ref: '#/components/responses/NotFound' } } }
+    patch: { security: [{ accessCookie: [] }], requestBody: { content: { application/json: { schema: { type: object, properties: { name: { type: string }, description: { type: string } } } } } }, responses: { '200': { description: Updated }, '400': { $ref: '#/components/responses/BadRequest' }, '401': { $ref: '#/components/responses/Unauthorized' }, '403': { $ref: '#/components/responses/Forbidden' } } }
+    delete: { security: [{ accessCookie: [] }], responses: { '200': { description: Deleted }, '401': { $ref: '#/components/responses/Unauthorized' }, '403': { $ref: '#/components/responses/Forbidden' } } }
+  /environments:
+    get: { security: [{ accessCookie: [] }], parameters: [{ name: projectId, in: query, required: true, schema: { type: string } }], responses: { '200': { description: Environment list }, '400': { $ref: '#/components/responses/BadRequest' }, '401': { $ref: '#/components/responses/Unauthorized' }, '403': { $ref: '#/components/responses/Forbidden' } } }
+    post: { security: [{ accessCookie: [] }], requestBody: { required: true, content: { application/json: { schema: { type: object, required: [name, projectId], properties: { name: { type: string }, description: { type: string }, projectId: { type: string } } } } } }, responses: { '201': { description: Created }, '400': { $ref: '#/components/responses/BadRequest' }, '401': { $ref: '#/components/responses/Unauthorized' }, '403': { $ref: '#/components/responses/Forbidden' }, '409': { $ref: '#/components/responses/Conflict' } } }
+  /secrets:
+    get: { security: [{ accessCookie: [] }], parameters: [{ name: environmentId, in: query, required: true, schema: { type: string } }], responses: { '200': { description: Metadata only; never plaintext or encryption internals }, '400': { $ref: '#/components/responses/BadRequest' }, '401': { $ref: '#/components/responses/Unauthorized' }, '403': { $ref: '#/components/responses/Forbidden' } } }
+    post: { security: [{ accessCookie: [] }], requestBody: { required: true, content: { application/json: { schema: { type: object, required: [key, value, environmentId], properties: { key: { type: string }, value: { type: string, format: password }, description: { type: string }, environmentId: { type: string } } } } } }, responses: { '201': { description: Created without encryption internals }, '400': { $ref: '#/components/responses/BadRequest' }, '401': { $ref: '#/components/responses/Unauthorized' }, '403': { $ref: '#/components/responses/Forbidden' }, '409': { $ref: '#/components/responses/Conflict' } } }
+  /secrets/{id}:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    patch: { security: [{ accessCookie: [] }], responses: { '200': { description: Updated without encryption internals }, '400': { $ref: '#/components/responses/BadRequest' }, '401': { $ref: '#/components/responses/Unauthorized' }, '403': { $ref: '#/components/responses/Forbidden' } } }
+    delete: { security: [{ accessCookie: [] }], responses: { '200': { description: Deleted }, '401': { $ref: '#/components/responses/Unauthorized' }, '403': { $ref: '#/components/responses/Forbidden' } } }
+  /secrets/{id}/reveal:
+    post: { security: [{ accessCookie: [] }], responses: { '200': { description: Explicitly authorized plaintext reveal }, '401': { $ref: '#/components/responses/Unauthorized' }, '403': { $ref: '#/components/responses/Forbidden' }, '404': { $ref: '#/components/responses/NotFound' } } }
+  /audit-logs:
+    get: { security: [{ accessCookie: [] }], parameters: [{ name: action, in: query, schema: { type: string } }, { name: projectId, in: query, schema: { type: string } }, { name: page, in: query, schema: { type: integer } }, { name: limit, in: query, schema: { type: integer } }], responses: { '200': { description: Logs scoped to current organization }, '401': { $ref: '#/components/responses/Unauthorized' }, '403': { $ref: '#/components/responses/Forbidden' } } }

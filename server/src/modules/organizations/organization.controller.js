@@ -7,7 +7,7 @@ import {
 } from './organization.service.js';
 
 export const createOrgController = async (req, res) => {
-  const org = await createOrganization(req.body, req.user, res);
+  const org = await createOrganization(req.body, req.user);
   res.status(201).json({ success: true, message: 'Organization created', data: { organization: org } });
 };
 

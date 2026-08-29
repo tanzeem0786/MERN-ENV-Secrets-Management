@@ -31,17 +31,17 @@ const ensureUniqueSlug = async (organizationId, base, ignoreId = null) => {
 
 const verifyOrganizationAccess = async (organizationId, user) => {
   if (!mongoose.Types.ObjectId.isValid(organizationId)) {
-    return next(new ErrorHandler("Invalid Organization ID!", 400));
+    throw new ErrorHandler('Invalid Organization ID!', 400);
   }
 
   const organization = await Organization.findById(organizationId);
   if (!organization) {
-    return next(new ErrorHandler("Organization Not Found!", 404));
+    throw new ErrorHandler('Organization Not Found!', 404);
   }
 
   const membership = await Membership.findOne({ organizationId, userId: user._id });
   if (!membership) {
-    return next(new ErrorHandler("Access Denied!", 403));
+    throw new ErrorHandler('Access Denied!', 403);
   }
 
   return organization;
@@ -81,12 +81,12 @@ export const getProjectsForOrganization = async (organizationId, user) => {
 
 export const getProjectById = async (projectId, user) => {
   if (!mongoose.Types.ObjectId.isValid(projectId)) {
-    return next(new ErrorHandler("Invalid Project ID!", 400));
+    throw new ErrorHandler('Invalid Project ID!', 400);
   }
 
   const project = await Project.findById(projectId);
   if (!project) {
-    return next(new ErrorHandler("Project Not Found!", 404));
+    throw new ErrorHandler('Project Not Found!', 404);
   }
 
   await verifyOrganizationAccess(project.organizationId, user);

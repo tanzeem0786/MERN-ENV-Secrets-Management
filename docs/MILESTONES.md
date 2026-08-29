@@ -77,6 +77,18 @@ Objectives:
 - safe error handling
 - appropriate loading/empty/error states
 
+## Milestone 8.5 — Backend hardening, testing, and API documentation
+
+Status: Complete
+
+Completed:
+- server-local Vitest, Supertest, and MongoDB Memory Server setup
+- authentication, encryption, CRUD, RBAC, tenant-isolation, leakage, audit, validation, and rate-limit tests
+- OpenAPI specification and exportable Postman collection
+- safer cookie handling and removal of access tokens from JSON responses
+
+Remaining production hardening includes distributed rate-limit storage, CSRF protection for cross-site cookie deployments, and broader coverage reporting.
+
 ## Milestone 9 — Hardening
 
 Objectives:

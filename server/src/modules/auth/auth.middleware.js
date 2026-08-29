@@ -3,34 +3,37 @@ import { verifyToken } from '../../security/jwt.js';
 import { getUserById } from './auth.service.js';
 
 export const authenticate = async (req, res, next) => {
-  const authHeader = req.headers.cookie || ''
-  const accessToken = authHeader.replace('accessToken=', '').trim() || '';
-  
-  if(!accessToken) {
-   return res.status(401).json({
-      success: false,
-      message: "Authorization Token Missing!"
-    })
-  }
-
-  let payload;
   try {
-    payload = verifyToken(accessToken);
-  } catch (error) {
-    return res.status(401).json({
+    const cookies = (req.headers.cookie || '').split(';').reduce((result, cookie) => {
+      const [name, ...value] = cookie.trim().split('=');
+      if (name) result[name] = value.join('=');
+      return result;
+    }, {});
+    const accessToken = cookies.accessToken || '';
+  
+    if (!accessToken) {
+      return res.status(401).json({
       success: false,
-      message: error.message || "Invalid or Expired Token!",
-    });
+        message: 'Authorization required',
+      });
+    }
+
+    let payload;
+    try {
+      payload = verifyToken(accessToken);
+    } catch {
+      return res.status(401).json({ success: false, message: 'Invalid or expired token' });
+    }
+
+    const user = await getUserById(payload.userId);
+    if (!user) return next(new ErrorHandler('User not found', 404));
+
+    const safeUser = user.toObject();
+    delete safeUser.password;
+
+    req.user = safeUser;
+    return next();
+  } catch (error) {
+    return next(error);
   }
-
-  const user = await getUserById(payload.userId);
-  if (!user) {
-    return next(new ErrorHandler("User Not Found!", 404));
-  }
-
-  const safeUser = user.toObject();
-  delete safeUser.password;
-
-  req.user = safeUser;
-  next();
 };

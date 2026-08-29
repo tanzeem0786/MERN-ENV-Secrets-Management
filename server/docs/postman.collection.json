@@ -1,0 +1,45 @@
+{
+  "info": {
+    "name": "MERNSecrets API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Exportable request collection. Set baseUrl and accessToken locally; no real credentials or secret values are included."
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:4000/api" },
+    { "key": "accessToken", "value": "" },
+    { "key": "organizationId", "value": "" },
+    { "key": "projectId", "value": "" },
+    { "key": "environmentId", "value": "" },
+    { "key": "secretId", "value": "" }
+  ],
+  "item": [
+    { "name": "Auth", "item": [
+      { "name": "Register", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"name\":\"Example User\",\"email\":\"user@example.test\",\"password\":\"local-test-password\"}" }, "url": "{{baseUrl}}/auth/register" } },
+      { "name": "Login", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"email\":\"user@example.test\",\"password\":\"local-test-password\"}" }, "url": "{{baseUrl}}/auth/login" } },
+      { "name": "Me", "request": { "method": "GET", "url": "{{baseUrl}}/auth/me" } },
+      { "name": "Logout", "request": { "method": "POST", "url": "{{baseUrl}}/auth/logout" } }
+    ] },
+    { "name": "Organizations", "item": [
+      { "name": "Create", "request": { "method": "POST", "body": { "mode": "raw", "raw": "{\"name\":\"Example Organization\"}" }, "url": "{{baseUrl}}/organizations" } },
+      { "name": "Mine", "request": { "method": "GET", "url": "{{baseUrl}}/organizations/mine" } },
+      { "name": "Get", "request": { "method": "GET", "url": "{{baseUrl}}/organizations/{{organizationId}}" } }
+    ] },
+    { "name": "Projects", "item": [
+      { "name": "Create", "request": { "method": "POST", "body": { "mode": "raw", "raw": "{\"name\":\"Example Project\",\"organizationId\":\"{{organizationId}}\"}" }, "url": "{{baseUrl}}/projects" } },
+      { "name": "List", "request": { "method": "GET", "url": "{{baseUrl}}/projects?organizationId={{organizationId}}" } },
+      { "name": "Get", "request": { "method": "GET", "url": "{{baseUrl}}/projects/{{projectId}}" } }
+    ] },
+    { "name": "Environments", "item": [
+      { "name": "Create", "request": { "method": "POST", "body": { "mode": "raw", "raw": "{\"name\":\"Development\",\"projectId\":\"{{projectId}}\"}" }, "url": "{{baseUrl}}/environments" } },
+      { "name": "List", "request": { "method": "GET", "url": "{{baseUrl}}/environments?projectId={{projectId}}" } }
+    ] },
+    { "name": "Secrets", "item": [
+      { "name": "Create", "request": { "method": "POST", "body": { "mode": "raw", "raw": "{\"key\":\"EXAMPLE_KEY\",\"value\":\"local-only-placeholder\",\"environmentId\":\"{{environmentId}}\"}" }, "url": "{{baseUrl}}/secrets" } },
+      { "name": "List Metadata", "request": { "method": "GET", "url": "{{baseUrl}}/secrets?environmentId={{environmentId}}" } },
+      { "name": "Reveal", "request": { "method": "POST", "url": "{{baseUrl}}/secrets/{{secretId}}/reveal" } }
+    ] },
+    { "name": "Audit Logs", "item": [
+      { "name": "List", "request": { "method": "GET", "url": "{{baseUrl}}/audit-logs" } }
+    ] }
+  ]
+}

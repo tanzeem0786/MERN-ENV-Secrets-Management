@@ -114,3 +114,9 @@ The response is always HTTP `403`, and the denial is recorded as `PERMISSION_DEN
 | GET/POST/PATCH/DELETE | `/api/secrets` or `/api/secrets/:id` | Corresponding `secret:*` permission |
 | POST | `/api/secrets/:id/reveal` | `secret:reveal` |
 | GET | `/api/audit-logs` | `audit:read` |
+
+## Hardening references
+
+- OpenAPI specification: `server/docs/openapi.yaml`
+- Postman collection: `server/docs/postman.collection.json`
+- Test commands: `npm --prefix server test`, `npm --prefix server run test:watch`, and `npm --prefix server run test:coverage`

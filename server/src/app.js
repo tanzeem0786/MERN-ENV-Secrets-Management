@@ -13,6 +13,7 @@ app.use(express.json());
 app.use(
   cors({
     origin: env.CORS_ORIGIN,
+    credentials: true,
     optionsSuccessStatus: 200,
   })
 );

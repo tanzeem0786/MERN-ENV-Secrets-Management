@@ -7,7 +7,7 @@ import ErrorHandler from '../../middleware/errorHandler.js';
 export const registerUser = async ({ name, email, password }) => {
   const existing = await User.findOne({ email });
   if (existing) {
-    return next(new ErrorHandler("Email Already in Use!", 409));
+    throw new ErrorHandler('Email already in use', 409);
   }
 
   const hashed = await hashPassword(password);
@@ -21,12 +21,12 @@ export const registerUser = async ({ name, email, password }) => {
 export const loginUser = async ({ email, password }) => {
   const user = await User.findOne({ email });
   if (!user) {
-    return next(new ErrorHandler('Invalid email or password', 401));
+    throw new ErrorHandler('Invalid email or password', 401);
   }
 
   const valid = await comparePassword(password, user.password);
   if (!valid) {
-   return next(new ErrorHandler('Invalid email or password', 401));
+  throw new ErrorHandler('Invalid email or password', 401);
   }
 
   const token = signToken({ userId: user._id.toString() });

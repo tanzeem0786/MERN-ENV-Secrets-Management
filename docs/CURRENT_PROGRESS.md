@@ -7,7 +7,7 @@
 Update this section whenever work moves forward.
 
 ```text
-Current milestone: M8
+Current milestone: M8.5
 Status: Complete
 ```
 
@@ -53,6 +53,10 @@ Preferred storage is HttpOnly cookie rather than localStorage/sessionStorage.
 
 Implemented centralized permissions for `owner`, `admin`, `developer`, and `viewer` memberships. Existing organization, project, environment, secret, and audit routes now enforce permissions server-side. Authorization failures return HTTP 403 and create `PERMISSION_DENIED` audit entries.
 
+### Backend hardening and testing
+
+Implemented server-local Vitest, Supertest, and MongoDB Memory Server coverage for authentication, tenant isolation, CRUD flows, secret leakage, encryption integrity, RBAC, audit behavior, validation, and rate limiting. Added OpenAPI and Postman documentation under `server/docs/`.
+
 ## Important open items
 
 Verify in the actual code before claiming completion:
@@ -64,10 +68,10 @@ Verify in the actual code before claiming completion:
 - [ ] secret CRUD implementation
 - [ ] reveal-secret endpoint security
 - [ ] CSRF strategy for deployment topology
-- [ ] security-focused tests
-- [ ] production hardening
+- [x] security-focused tests
+- [x] production hardening
 - [ ] frontend integration
-- [ ] documentation/code consistency
+- [x] documentation/code consistency
 
 ## Agent update rule
 

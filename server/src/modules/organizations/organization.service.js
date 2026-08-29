@@ -24,7 +24,7 @@ const ensureUniqueSlug = async (base) => {
   return slug;
 };
 
-export const createOrganization = async ({ name }, user, res) => {
+export const createOrganization = async ({ name }, user) => {
   const base = generateSlug(name);
   const slug = await ensureUniqueSlug(base);
 
@@ -35,11 +35,7 @@ export const createOrganization = async ({ name }, user, res) => {
   } catch (err) {
     // rollback organization if membership creation fails
     await Organization.findByIdAndDelete(org._id);
-    return res.status(500).json({
-      success: false,
-      message: err.message || "Failed to Create Membership for Organisation!",
-    });
-    // return next(new ErrorHandler("Failed to Create Membership for Organization!", 500));
+    throw new ErrorHandler('Failed to create organization membership', 500);
   }
 
   return org;
@@ -53,18 +49,18 @@ export const getMyOrganizations = async (user) => {
 
 export const getOrganizationById = async (id, user) => {
   if (!mongoose.Types.ObjectId.isValid(id)) {
-    return next(new ErrorHandler("Invalid Organization ID!", 400));
+    throw new ErrorHandler('Invalid Organization ID!', 400);
   }
 
   const org = await Organization.findById(id);
   if (!org) {
-    return next(new ErrorHandler("Organization Not Found!", 404));
+    throw new ErrorHandler('Organization Not Found!', 404);
   }
 
   // Verify that user is a member of the organization
   const membership = await Membership.findOne({ userId: user._id, organizationId: org._id });
   if (!membership) {
-    return next(new ErrorHandler("Access Denied!", 403));
+    throw new ErrorHandler('Access Denied!', 403);
   }
 
   return org;
@@ -72,17 +68,17 @@ export const getOrganizationById = async (id, user) => {
 
 export const updateOrganization = async (id, updates, user) => {
   if (!mongoose.Types.ObjectId.isValid(id)) {
-    return next(new ErrorHandler("Invalid Organization ID!", 400));
+    throw new ErrorHandler('Invalid Organization ID!', 400);
   }
 
   const org = await Organization.findById(id);
   if (!org) {
-    return next(new ErrorHandler("Organization Not Found!", 404));
+    throw new ErrorHandler('Organization Not Found!', 404);
   }
 
   // Only owner may update
   if (org.ownerId.toString() !== user._id.toString()) {
-    return next(new ErrorHandler("Only the Organization Owner may Update the Organization", 403));
+    throw new ErrorHandler('Only the Organization Owner may Update the Organization', 403);
   }
 
   if (updates.name) {
@@ -98,17 +94,17 @@ export const updateOrganization = async (id, updates, user) => {
 
 export const deleteOrganization = async (id, user) => {
   if (!mongoose.Types.ObjectId.isValid(id)) {
-    return next(new ErrorHandler("Invalid Organization ID!", 400));
+    throw new ErrorHandler('Invalid Organization ID!', 400);
   }
 
   const org = await Organization.findById(id);
   if (!org) {
-    return next(new ErrorHandler("Organization Not Found!", 404));
+    throw new ErrorHandler('Organization Not Found!', 404);
   }
 
   // Only owner may delete
   if (org.ownerId.toString() !== user._id.toString()) {
-    return next(new ErrorHandler("Only the Organization Owner may Delete the organization", 403));
+    throw new ErrorHandler('Only the Organization Owner may Delete the organization', 403);
   }
 
   // Delete memberships and organization
