@@ -69,3 +69,63 @@ export async function logoutWithSession(session = readSession()) {
   await client.post('/auth/logout');
   return true;
 }
+
+export function getAuthenticatedSession() {
+  const session = readSession();
+
+  if (!session?.accessToken) {
+    throw new Error('You are not authenticated. Please run "mernsecrets login" first.');
+  }
+
+  return session;
+}
+
+export function getAuthenticatedClient() {
+  return createApiClient(getAuthenticatedSession());
+}
+
+export async function listProjects() {
+  const client = getAuthenticatedClient();
+  const organizationsResponse = await client.get('/organizations/mine');
+  const organizations = organizationsResponse?.data?.data?.organizations ?? [];
+  const projects = [];
+
+  for (const organization of organizations) {
+    const organizationId = organization?._id || organization?.id;
+
+    if (!organizationId) {
+      continue;
+    }
+
+    const response = await client.get('/projects', {
+      params: { organizationId },
+    });
+
+    const organizationProjects = response?.data?.data?.projects ?? [];
+    projects.push(...organizationProjects);
+  }
+
+  return projects;
+}
+
+export async function listEnvironmentsForProject(projectIdentifier) {
+  const projects = await listProjects();
+  const project = projects.find((candidate) => {
+    const id = candidate?._id || candidate?.id;
+    return [candidate?.name, candidate?.slug, id].includes(projectIdentifier);
+  });
+
+  if (!project) {
+    throw new Error(`Project "${projectIdentifier}" was not found.`);
+  }
+
+  const client = getAuthenticatedClient();
+  const response = await client.get('/environments', {
+    params: { projectId: project._id || project.id },
+  });
+
+  return {
+    project,
+    environments: response?.data?.data?.environments ?? [],
+  };
+}

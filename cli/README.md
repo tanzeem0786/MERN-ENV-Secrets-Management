@@ -4,9 +4,9 @@ This CLI provides the authenticated command entry point for the MERNSecrets plat
 
 ## Purpose
 
-The CLI is designed to authenticate against the existing backend API, persist a local session cookie, and support future project/environment/secret workflows without extracting browser credentials.
+The CLI authenticates against the existing backend API and uses the current cookie-based JWT flow to list the projects and environments available to the authenticated user.
 
-This milestone implements the CLI authentication flow only. It does not fetch secrets, manage environment files, or execute arbitrary commands.
+This milestone implements project and environment listing only. It does not fetch secrets, decrypt values, generate `.env` files, or execute arbitrary commands.
 
 ## Installation
 
@@ -19,9 +19,9 @@ npm install
 
 ```bash
 node src/index.js --help
-node src/index.js --version
-node src/index.js login --help
-node src/index.js logout --help
+node src/index.js projects --help
+node src/index.js env --help
+node src/index.js env list --project my-project
 ```
 
 ## Authentication flow
@@ -34,7 +34,7 @@ The command prompts for:
 - email
 - password
 
-The password is never echoed and is not persisted after the login request completes.
+The password is never echoed and is not stored.
 
 The CLI stores only the authenticated session token in the OS user configuration directory. The repository is never used as storage for credentials.
 
@@ -64,23 +64,32 @@ The stored session contains only the required access token and user email. It do
 
 - `mernsecrets login` — authenticate the CLI with the backend API
 - `mernsecrets logout` — clear the local CLI session and logout from the backend when possible
-- `mernsecrets projects` — placeholder for future project workflows
-- `mernsecrets env` — placeholder for future environment workflows
+- `mernsecrets projects` — list projects visible to the authenticated user
+- `mernsecrets env list --project <project>` — list environments for the named project
 - `mernsecrets pull` — placeholder for future secret retrieval
 - `mernsecrets run` — placeholder for future secure command execution
+
+## Example usage
+
+```bash
+mernsecrets login
+mernsecrets projects
+mernsecrets env list --project ecommerce-api
+```
 
 ## Current status
 
 Implemented in this milestone:
-- CLI login with hidden password input
+- CLI login/logout authentication flow
+- project listing from the authenticated backend API
+- environment listing for a selected project using the existing project ID lookup flow
 - secure local session storage outside the repository
-- logout that clears local state and calls the backend logout endpoint when possible
 
 Not implemented yet:
 - secret retrieval
 - secret decryption
 - environment file generation
-- project or environment API usage
+- project creation/update/delete commands
 - command execution
 - browser cookie extraction
 - credential or password persistence
@@ -95,7 +104,6 @@ Not implemented yet:
 
 ## Planned milestones
 
-- M10.3 → Projects & Environments
 - M10.4 → Secret Pull
 - M10.5 → Secure Run
 - M10.6 → CLI Security & Testing
