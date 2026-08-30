@@ -1,0 +1,23 @@
+{
+  "name": "mernsecrets",
+  "version": "0.1.0",
+  "description": "MERNSecrets CLI foundation",
+  "type": "module",
+  "bin": {
+    "mernsecrets": "src/index.js"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node src/index.js"
+  },
+  "keywords": [
+    "mernsecrets",
+    "cli",
+    "secrets",
+    "environment-management"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "commander": "^12.1.0"
+  }
+}
