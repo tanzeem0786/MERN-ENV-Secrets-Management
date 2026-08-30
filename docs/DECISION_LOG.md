@@ -55,6 +55,20 @@ Record meaningful architectural and security decisions here.
 
 **Consequences:** New protected operations must register a permission and compose `authenticate` with `authorize(permission)`. Authorization denials are written to the existing audit log.
 
+## D008 — CLI-local session storage without browser cookie reuse
+
+**Date:** 2026-08-30
+
+**Decision:** Store CLI authentication state in an OS-scoped user configuration directory and persist only the server-issued access token; do not extract or copy browser cookies.
+
+**Context:** The backend uses an HttpOnly cookie-based JWT flow for browser sessions, while the CLI must run independently and should not touch browser storage.
+
+**Alternatives considered:** Reusing browser cookies, storing the plaintext password locally, storing tokens in the repository, or inventing a separate custom auth scheme.
+
+**Reason:** The backend already exposes a cookie-based login/logout flow that is compatible with a CLI-driven session if the CLI stores the cookie value locally, while keeping browser credentials isolated and avoiding password persistence.
+
+**Consequences:** Future CLI commands can authenticate by sending the stored cookie header to the backend without reading browser state. The CLI must never log credentials or tokens and must clear local session state on logout.
+
 ## Adding decisions
 
 For every new architectural/security decision, record:

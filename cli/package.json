@@ -1,7 +1,7 @@
 {
   "name": "mernsecrets",
-  "version": "0.1.0",
-  "description": "MERNSecrets CLI foundation",
+  "version": "0.2.0",
+  "description": "MERNSecrets CLI authentication foundation",
   "type": "module",
   "bin": {
     "mernsecrets": "src/index.js"
@@ -14,10 +14,12 @@
     "mernsecrets",
     "cli",
     "secrets",
-    "environment-management"
+    "environment-management",
+    "authentication"
   ],
   "license": "MIT",
   "dependencies": {
+    "axios": "^1.7.7",
     "commander": "^12.1.0"
   }
 }

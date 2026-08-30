@@ -1,12 +1,12 @@
 # MERNSecrets CLI
 
-This is the foundation for the MERNSecrets command-line interface.
+This CLI provides the authenticated command entry point for the MERNSecrets platform.
 
 ## Purpose
 
-The CLI provides a structured command entry point for future product workflows such as login, project inspection, environment access, and secret retrieval.
+The CLI is designed to authenticate against the existing backend API, persist a local session cookie, and support future project/environment/secret workflows without extracting browser credentials.
 
-This milestone intentionally implements only the command surface and help output. No authentication, secret retrieval, or runtime execution is implemented yet.
+This milestone implements the CLI authentication flow only. It does not fetch secrets, manage environment files, or execute arbitrary commands.
 
 ## Installation
 
@@ -20,33 +20,82 @@ npm install
 ```bash
 node src/index.js --help
 node src/index.js --version
+node src/index.js login --help
+node src/index.js logout --help
 ```
+
+## Authentication flow
+
+```bash
+mernsecrets login
+```
+
+The command prompts for:
+- email
+- password
+
+The password is never echoed and is not persisted after the login request completes.
+
+The CLI stores only the authenticated session token in the OS user configuration directory. The repository is never used as storage for credentials.
+
+### Default API base URL
+
+```bash
+http://localhost:4000/api
+```
+
+This can be overridden with:
+
+```bash
+MERNSECRETS_API_URL=http://localhost:4000/api mernsecrets login
+```
+
+## Session storage
+
+Credentials are persisted in an OS-scoped user config directory rather than inside the project repository:
+
+- Windows: `%APPDATA%\mernsecrets\session.json`
+- macOS: `~/Library/Application Support/mernsecrets/session.json`
+- Linux: `~/.config/mernsecrets/session.json`
+
+The stored session contains only the required access token and user email. It does not store the password.
 
 ## Commands
 
-- `mernsecrets login` — authenticate with the MERNSecrets API (placeholder)
-- `mernsecrets logout` — end the current CLI session (placeholder)
-- `mernsecrets projects` — list or inspect projects (placeholder)
-- `mernsecrets env` — inspect environment-related commands (placeholder)
-- `mernsecrets pull` — fetch secrets and environment data (planned)
-- `mernsecrets run` — execute project workflows (planned)
+- `mernsecrets login` — authenticate the CLI with the backend API
+- `mernsecrets logout` — clear the local CLI session and logout from the backend when possible
+- `mernsecrets projects` — placeholder for future project workflows
+- `mernsecrets env` — placeholder for future environment workflows
+- `mernsecrets pull` — placeholder for future secret retrieval
+- `mernsecrets run` — placeholder for future secure command execution
 
 ## Current status
 
-The following functionality is intentionally not implemented in this milestone:
+Implemented in this milestone:
+- CLI login with hidden password input
+- secure local session storage outside the repository
+- logout that clears local state and calls the backend logout endpoint when possible
 
-- credential storage
-- API authentication
+Not implemented yet:
 - secret retrieval
 - secret decryption
 - environment file generation
-- child process execution
-- configuration persistence
+- project or environment API usage
+- command execution
+- browser cookie extraction
+- credential or password persistence
+
+## Security notes
+
+- no passwords are stored locally
+- no tokens are printed to the terminal
+- no browser cookies are accessed
+- the CLI does not inspect browser storage or Chrome/Edge/Firefox cookie stores
+- the session file is written with restrictive permissions where supported
 
 ## Planned milestones
 
-- CLI auth and session handling
-- project and environment listing
-- safe secret retrieval
-- execution workflow support
-- encrypted local configuration management
+- M10.3 → Projects & Environments
+- M10.4 → Secret Pull
+- M10.5 → Secure Run
+- M10.6 → CLI Security & Testing

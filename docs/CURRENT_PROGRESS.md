@@ -7,9 +7,13 @@
 Update this section whenever work moves forward.
 
 ```text
-Current milestone: M8.5
-Status: Complete
+Current milestone: M10.2
+Status: In progress
 ```
+
+### CLI authentication
+
+The CLI now supports a minimal authenticated session flow using the backend's existing cookie-based login/logout endpoints without extracting browser credentials. The CLI persists only the server-issued access token in an OS-scoped configuration directory and does not store the user's password.
 
 ## Completed / known implementation
 

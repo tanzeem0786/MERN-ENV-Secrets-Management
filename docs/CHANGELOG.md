@@ -83,3 +83,20 @@ For meaningful changes, record:
 
 ### Documentation
 - recorded the root-cause fix for the browser-origin mismatch observed during login/session verification
+
+## 2026-08-30 — M10.2 CLI authentication
+
+### Changed
+- added CLI login/logout authentication support using the existing cookie-based backend flow
+- added a reusable API client and OS-scoped session storage for access tokens
+- masked password input during CLI login and prevented password persistence
+- kept project, environment, pull, and run commands as placeholder shells
+
+### Security impact
+- no passwords are stored locally
+- browser cookies are never accessed or copied
+- session state is stored outside the repository in a user-scoped config directory
+- tokens are not printed in logs or error output
+
+### Documentation
+- updated the CLI README with M10.2 authentication behavior, storage location, and limitations
