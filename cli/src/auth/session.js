@@ -2,6 +2,17 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { ensureSecureFilePermissions, getConfigDirectory } from '../config/paths.js';
 
+function sanitizeSession(session) {
+  if (!session || typeof session !== 'object') {
+    return null;
+  }
+
+  const sanitizedSession = { ...session };
+  delete sanitizedSession.password;
+
+  return sanitizedSession;
+}
+
 export function getSessionFilePath() {
   return path.join(getConfigDirectory(), 'session.json');
 }
@@ -15,7 +26,7 @@ export function readSession() {
 
   try {
     const rawSession = fs.readFileSync(sessionPath, 'utf8');
-    const parsedSession = JSON.parse(rawSession);
+    const parsedSession = sanitizeSession(JSON.parse(rawSession));
 
     if (!parsedSession?.accessToken) {
       return null;
@@ -30,9 +41,10 @@ export function readSession() {
 export function writeSession(session) {
   const sessionPath = getSessionFilePath();
   const directory = path.dirname(sessionPath);
+  const sanitizedSession = sanitizeSession(session);
 
   fs.mkdirSync(directory, { recursive: true, mode: 0o700 });
-  fs.writeFileSync(sessionPath, JSON.stringify(session, null, 2), {
+  fs.writeFileSync(sessionPath, JSON.stringify(sanitizedSession ?? {}, null, 2), {
     mode: 0o600,
   });
   ensureSecureFilePermissions(sessionPath);
