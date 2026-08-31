@@ -129,3 +129,47 @@ export async function listEnvironmentsForProject(projectIdentifier) {
     environments: response?.data?.data?.environments ?? [],
   };
 }
+
+export async function listSecretsForEnvironment(environmentIdentifier) {
+  const environment = await resolveEnvironment(environmentIdentifier);
+  const client = getAuthenticatedClient();
+  const response = await client.get('/secrets', {
+    params: { environmentId: environment._id || environment.id },
+  });
+
+  return response?.data?.data?.secrets ?? [];
+}
+
+export async function resolveEnvironment(environmentIdentifier) {
+  const projects = await listProjects();
+
+  for (const project of projects) {
+    const projectId = project?._id || project?.id;
+
+    if (!projectId) {
+      continue;
+    }
+
+    const response = await getAuthenticatedClient().get('/environments', {
+      params: { projectId },
+    });
+
+    const environments = response?.data?.data?.environments ?? [];
+    const environment = environments.find((candidate) => {
+      const id = candidate?._id || candidate?.id;
+      return [candidate?.name, candidate?.slug, id].includes(environmentIdentifier);
+    });
+
+    if (environment) {
+      return environment;
+    }
+  }
+
+  throw new Error(`Environment "${environmentIdentifier}" was not found.`);
+}
+
+export async function revealSecret(secretId) {
+  const client = getAuthenticatedClient();
+  const response = await client.post(`/secrets/${secretId}/reveal`);
+  return response?.data?.data?.secret;
+}
