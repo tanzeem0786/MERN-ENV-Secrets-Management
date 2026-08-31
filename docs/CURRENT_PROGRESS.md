@@ -15,6 +15,8 @@ Status: In progress
 
 The CLI now supports a minimal authenticated session flow using the backend's existing cookie-based login/logout endpoints without extracting browser credentials. The CLI persists only the server-issued access token in an OS-scoped configuration directory and does not store the user's password.
 
+The login command now prompts for email and password interactively instead of relying on any embedded credentials and never persists the password to disk.
+
 ## Completed / known implementation
 
 ### Environment validation

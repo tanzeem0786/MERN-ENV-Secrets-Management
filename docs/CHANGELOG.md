@@ -100,3 +100,18 @@ For meaningful changes, record:
 
 ### Documentation
 - updated the CLI README with M10.2 authentication behavior, storage location, and limitations
+
+## 2026-08-31 — CLI login hardening
+
+### Changed
+- replaced a hardcoded user credential pair with an interactive email/password prompt in the CLI login command
+- fixed the prompt implementation so it awaits user input before attempting authentication
+- kept the session storage behavior unchanged while ensuring credentials remain ephemeral and never written to disk
+
+### Security impact
+- no production or test credentials are embedded in source code
+- no password is persisted to the filesystem or session record
+- the CLI still never reads browser cookies or stores plaintext credentials locally
+
+### Documentation
+- reconciled the CLI implementation with the documented authentication behavior and the milestone security requirements

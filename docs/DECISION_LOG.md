@@ -69,6 +69,20 @@ Record meaningful architectural and security decisions here.
 
 **Consequences:** Future CLI commands can authenticate by sending the stored cookie header to the backend without reading browser state. The CLI must never log credentials or tokens and must clear local session state on logout.
 
+## D009 — Interactive credential prompts without embedded secrets
+
+**Date:** 2026-08-31
+
+**Decision:** The CLI login command must prompt for credentials at runtime and never hardcode or persist a password in the source tree or config file.
+
+**Context:** The CLI earlier contained a hardcoded email and password pair, which violated the project's security requirements and contradicted the documented authentication flow.
+
+**Alternatives considered:** Storing credentials in plaintext in code, reading from a persisted file, or silently accepting environment variables containing secrets.
+
+**Reason:** The project explicitly prohibits secret persistence, requires no plaintext password storage, and documents an interactive login flow that keeps credentials in memory only for the duration of the request.
+
+**Consequences:** The CLI now opens an interactive prompt for email and password, masks the password while entered, and stores only the session token returned by the backend. Any environment that cannot provide an interactive TTY will fail safely instead of embedding credentials.
+
 ## Adding decisions
 
 For every new architectural/security decision, record:
