@@ -7,11 +7,11 @@ const VALID_ENV_VAR_NAME = /^[A-Za-z_][A-Za-z0-9_]*$/;
 
 const redactError = (message) => {
   if (!message) {
-    return '✗ Unable to run the requested command.';
+    return '✗ Unable to retrieve environment secrets.';
   }
 
-  if (message.includes('accessToken') || message.includes('Cookie') || message.includes('password')) {
-    return '✗ Unable to run the requested command.';
+  if (/(accessToken|Cookie|password|token|secret)/i.test(message)) {
+    return '✗ Unable to retrieve environment secrets.';
   }
 
   return message;
